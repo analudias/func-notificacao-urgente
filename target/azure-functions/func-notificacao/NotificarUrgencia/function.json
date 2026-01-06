@@ -1,0 +1,15 @@
+{
+  "scriptFile" : "../notificacao-urgente-1.0-SNAPSHOT.jar",
+  "entryPoint" : "com.pos.tech.Function.run",
+  "bindings" : [ {
+    "type" : "httpTrigger",
+    "direction" : "in",
+    "name" : "req",
+    "methods" : [ "POST" ],
+    "authLevel" : "ANONYMOUS"
+  }, {
+    "type" : "http",
+    "direction" : "out",
+    "name" : "$return"
+  } ]
+}
