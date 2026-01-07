@@ -52,6 +52,11 @@
             <artifactId>sendgrid-java</artifactId>
             <version>4.10.2</version>
         </dependency>
+        <dependency>
+            <groupId>com.azure</groupId>
+            <artifactId>azure-messaging-eventgrid</artifactId>
+            <version>4.22.0</version>
+        </dependency>
 
     </dependencies>
 
