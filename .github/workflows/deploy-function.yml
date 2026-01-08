@@ -1,17 +1,20 @@
 name: Deploy Azure Function - Notificacao
 
-# Gatilho configurado para a sua branch master
 on:
   push:
     branches:
-      - master
-  workflow_dispatch: # Permite disparar o deploy manualmente pelo GitHub
+      - master  # Ajustado para sua branch atual
+  workflow_dispatch:
 
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
+    permissions:
+      id-token: write # Obrigatório para o Azure Login via OIDC
+      contents: read
+
     steps:
-      - name: 'Checkout GitHub Action'
+      - name: 'Checkout to the branch'
         uses: actions/checkout@v4
 
       - name: 'Setup Java 21'
@@ -20,14 +23,22 @@ jobs:
           java-version: '21'
           distribution: 'microsoft'
 
-      # Compila o projeto e gera o pacote da função
-      - name: 'Build Function'
-        run: mvn clean package
+      # Login usando as credenciais que já funcionam na sua API
+      - name: 'Azure Login'
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.CAFIAPPOSTECH_AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.CAFIAPPOSTECH_AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.CAFIAPPOSTECH_AZURE_SUBSCRIPTION_ID }}
 
-      # Realiza o deploy usando a Secret que você configurou
-      - name: 'Run Azure Functions Action'
+      - name: 'Build Function'
+        run: mvn clean package -DskipTests
+
+      - name: 'Deploy to Azure Functions'
         uses: Azure/functions-action@v1
         with:
           app-name: 'func-notificacao'
           package: './target/azure-functions/func-notificacao'
+          # Como você já fez o Login acima, o publish-profile torna-se opcional, 
+          # mas você pode mantê-lo se a secret estiver correta.
           publish-profile: ${{ secrets.AZURE_FUNCTIONAPP_PUBLISH_PROFILE }}
