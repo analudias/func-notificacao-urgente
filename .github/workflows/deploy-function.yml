@@ -2,12 +2,17 @@ name: Deploy Azure Function - Notificacao
 
 on:
   push:
-    branches: [ msster ]
+    branches: 
+      - master  # Mude de main para master aqui
   workflow_dispatch:
 
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
+    # Adicionamos permissões para garantir que o GitHub consiga se comunicar com a Azure
+    permissions:
+      id-token: write
+      contents: read
 
     steps:
       - name: Checkout
@@ -28,4 +33,3 @@ jobs:
           app-name: func-notificacao
           package: ./target/azure-functions/func-notificacao
           publish-profile: ${{ secrets.AZURE_FUNCTIONAPP_PUBLISH_PROFILE }}
-          scm-do-build: true
