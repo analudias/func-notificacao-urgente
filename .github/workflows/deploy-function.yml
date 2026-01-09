@@ -2,17 +2,13 @@ name: Deploy Azure Function - Notificacao
 
 on:
   push:
-    branches: 
-      - master  # Mude de main para master aqui
+    branches:
+      - master
   workflow_dispatch:
 
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
-    # Adicionamos permissões para garantir que o GitHub consiga se comunicar com a Azure
-    permissions:
-      id-token: write
-      contents: read
 
     steps:
       - name: Checkout
@@ -27,9 +23,10 @@ jobs:
       - name: Build
         run: mvn clean package -DskipTests
 
-      - name: Deploy (Publish Profile)
+      - name: 'Run Azure Functions Action'
         uses: Azure/functions-action@v1
         with:
-          app-name: func-notificacao
-          package: ./target/azure-functions/func-notificacao
+          app-name: 'func-notificacao'
+          # O caminho do pacote deve apontar para a pasta gerada pelo Maven
+          package: './target/azure-functions/func-notificacao'
           publish-profile: ${{ secrets.AZURE_FUNCTIONAPP_PUBLISH_PROFILE }}
