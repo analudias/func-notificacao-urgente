@@ -1,42 +1,47 @@
 package com.pos.tech;
 
 import com.microsoft.azure.functions.ExecutionContext;
-import com.sendgrid.*;
-import com.sendgrid.helpers.mail.Mail;
-import com.sendgrid.helpers.mail.objects.*;
+import jakarta.mail.*;
+import jakarta.mail.internet.*;
+import java.util.Properties;
 
 public class NotificacaoService {
-    
-    private static final String API_KEY = System.getenv("SENDGRID_API_KEY");
-    private static final SendGrid sg = new SendGrid(API_KEY);
 
     public static void enviarEmailUrgencia(String corpo, ExecutionContext context) throws Exception {
-        String fromEmail = System.getenv("FROM_EMAIL");
-        String toEmailsRaw = System.getenv("TO_EMAILS");
 
-        if (toEmailsRaw == null || fromEmail == null) {
-            throw new IllegalStateException("Configurações de e-mail (FROM_EMAIL/TO_EMAILS) ausentes.");
-        }
+        String host = System.getenv("EMAIL_HOST");
+        String port = System.getenv("EMAIL_PORT");
+        String user = System.getenv("EMAIL_USER");
+        String pass = System.getenv("EMAIL_PASS");
+        String destinatarios = System.getenv("TO_EMAILS");
 
-        Mail mail = new Mail();
-        mail.setFrom(new Email(fromEmail));
-        mail.setSubject("[URGENTE] Feedback crítico recebido");
-        mail.addContent(new Content("text/plain", corpo));
+        Properties props = new Properties();
+        props.put("mail.smtp.host", host);
+        props.put("mail.smtp.port", port);
+        props.put("mail.smtp.auth", "true");
+        props.put("mail.smtp.starttls.enable", "true");
 
-        Personalization personalization = new Personalization();
-        for (String emailStr : toEmailsRaw.split(",")) {
-            personalization.addTo(new Email(emailStr.trim()));
-        }
-        mail.addPersonalization(personalization);
+        Session session = Session.getInstance(props, new Authenticator() {
+            @Override
+            protected PasswordAuthentication getPasswordAuthentication() {
+                return new PasswordAuthentication(user, pass);
+            }
+        });
 
-        Request req = new Request();
-        req.setMethod(Method.POST);
-        req.setEndpoint("mail/send");
-        req.setBody(mail.build());
+        MimeMessage message = new MimeMessage(session);
+        message.setFrom(new InternetAddress(user));
+        message.setRecipients(Message.RecipientType.TO, InternetAddress.parse(destinatarios));
+        message.setSubject("[URGENTE] Feedback crítico recebido", "UTF-8");
 
-        Response resp = sg.api(req);
-        if (resp.getStatusCode() != 202) {
-            throw new RuntimeException("SendGrid erro: " + resp.getStatusCode());
-        }
+        MimeBodyPart texto = new MimeBodyPart();
+        texto.setText(corpo, "UTF-8");
+
+        Multipart multipart = new MimeMultipart();
+        multipart.addBodyPart(texto);
+
+        message.setContent(multipart);
+
+        Transport.send(message);
+        context.getLogger().info("E-mail de urgência enviado via SMTP com sucesso.");
     }
 }
